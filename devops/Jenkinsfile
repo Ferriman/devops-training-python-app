@@ -28,7 +28,10 @@ pipeline {
             steps {
                 sh 'docker compose -f docker-compose.yml up -d'
                 sh 'sleep 20'
-                sh 'docker exec my-flask-app-dc wget -q -O- http://localhost:5000/health'
+                sh '''
+                    APP_IP=$(docker inspect -f "{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}" my-flask-app-dc)
+                    curl -f http://$APP_IP:5000/health
+                '''
                 sh 'docker compose -f docker-compose.yml down --volumes'
             }
         }
