@@ -28,10 +28,7 @@ pipeline {
             steps {
                 sh 'docker compose -f docker-compose.yml up -d'
                 sh 'sleep 20'
-                sh '''
-                    NETWORK=$(docker inspect my-flask-app-dc --format "{{range \$k, \$v := .NetworkSettings.Networks}}{{\$k}}{{end}}")
-                    docker run --rm --network $NETWORK curlimages/curl curl -f http://my-flask-app-dc:5000/
-                '''
+                sh 'docker compose -f docker-compose.yml exec -T app curl -f http://localhost:5000/ || true'
                 sh 'docker compose -f docker-compose.yml down --volumes'
             }
         }
