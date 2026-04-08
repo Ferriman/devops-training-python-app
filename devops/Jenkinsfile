@@ -1,18 +1,20 @@
 pipeline {
+    agent any
 
-    agent { dockerfile true }
     stages {
-       stage('Test') {
-            
+        stage('CI - Test') {
+            agent {
+                docker { image 'python:3.6-slim' }
+            }
             steps {
+                sh 'pip install -r requirements.txt'
                 sh 'pytest -q'
             }
         }
-         stage('Lint') {
-           
+
+        stage('CI - Docker Build') {
             steps {
-                sh 'pip install -r requirements.txt flake8 mypy'
-                sh 'make lint'
+                sh 'docker build -t devops-python-app -f devops/Dockerfile .'
             }
         }
     }
