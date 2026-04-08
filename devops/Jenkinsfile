@@ -17,5 +17,20 @@ pipeline {
                 sh 'docker build -t devops-python-app -f Dockerfile .'
             }
         }
+
+        stage('CD - Deploy') {
+            when {
+                anyOf {
+                    branch 'develop'
+                    branch 'master'
+                }
+            }
+            steps {
+                sh 'docker compose -f docker-compose.yml up -d'
+                sh 'sleep 10'
+                sh 'curl -f http://localhost:5000/health'
+                sh 'docker compose -f docker-compose.yml down --volumes'
+            }
+        }
     }
 }
