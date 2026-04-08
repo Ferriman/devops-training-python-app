@@ -28,7 +28,10 @@ pipeline {
             steps {
                 sh 'docker compose -f docker-compose.yml up -d'
                 sh 'sleep 20'
-                sh 'docker run --rm --network vops-training-python-app_develop_scalian_training curlimages/curl curl -f http://my-flask-app-dc:5000/'
+                sh '''
+                    NETWORK=$(docker inspect my-flask-app-dc --format "{{range \$k, \$v := .NetworkSettings.Networks}}{{\$k}}{{end}}")
+                    docker run --rm --network $NETWORK curlimages/curl curl -f http://my-flask-app-dc:5000/
+                '''
                 sh 'docker compose -f docker-compose.yml down --volumes'
             }
         }
