@@ -23,11 +23,17 @@ on:
         default: DEV
 
 jobs:
-  dummy:
+  ci:
     runs-on: ubuntu-latest
     steps:
-      - name: Mostrar contexto
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Información del entorno
         run: |
-          echo "Repo: $GITHUB_REPOSITORY"
-          echo "Ref:  $GITHUB_REF"
-          echo "Branch: $GITHUB_REF_NAME"
+          echo "Rama: ${{ github.ref_name }}"
+          echo "SHA del commit: ${{ github.sha }}"
+          echo "Sistema operativo del runner: ${{ runner.os }}"
+          echo "Nombre del runner: ${{ runner.name }}"
+          echo "RUN_CD: ${{ inputs.RUN_CD }}"
+          echo "DEPLOY_ENV: ${{ inputs.DEPLOY_ENV }}"
