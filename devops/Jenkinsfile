@@ -14,7 +14,7 @@ pipeline {
 
         stage('CI - Docker Build') {
             steps {
-                sh 'docker build -t devops-python-app -f devops/Dockerfile .'
+                sh 'docker build -t devops-python-app -f Dockerfile .'
             }
         }
     }
