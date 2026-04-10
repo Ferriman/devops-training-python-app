@@ -61,7 +61,7 @@ jobs:
           pytest -q
 
   docker-build:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, docker]
     needs: ci
     steps:
       - name: Checkout código
