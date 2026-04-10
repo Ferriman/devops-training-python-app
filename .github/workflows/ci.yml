@@ -71,3 +71,23 @@ jobs:
         run: |
           docker build -t ${{ env.IMAGE_NAME }} -f Dockerfile .
           echo "Imagen ${{ env.IMAGE_NAME }} construida correctamente"
+
+  cd:
+    runs-on: ubuntu-latest
+    needs: docker-build
+    if: |
+      (github.ref_name == 'develop' || github.ref_name == 'master') &&
+      inputs.RUN_CD == true
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Desplegar con Docker Compose
+        run: |
+          docker compose -f docker-compose.yml up -d
+          sleep 20
+          docker compose -f docker-compose.yml exec -T app curl -f http://localhost:5000/ || true
+
+      - name: Limpieza siempre
+        if: always()
+        run: docker compose -f docker-compose.yml down --volumes
