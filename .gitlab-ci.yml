@@ -1,0 +1,70 @@
+# Pipeline CI/CD para la aplicación Python
+# Equivalent a Jenkinsfile (Práctica 2) y ci.yml de GitHub Actions (Práctica 3)
+
+# Variables globales reutilizables en todos los jobs
+variables:
+  IMAGE_NAME: devops-python-app
+  APP_URL: http://localhost:5000
+
+# Definición de etapas del pipeline en orden de ejecución
+stages:
+  - ci
+  - cd
+
+# ─────────────────────────────────────────────
+# STAGE CI
+# ─────────────────────────────────────────────
+
+# Job de información del entorno
+ci:info:
+  stage: ci
+  image: python:3.6-slim
+  script:
+    - echo "Rama: $CI_COMMIT_BRANCH"
+    - echo "Commit: $CI_COMMIT_SHA"
+    - echo "IMAGE_NAME: $IMAGE_NAME"
+    - echo "APP_URL: $APP_URL"
+
+# Job de tests unitarios ejecutado dentro de un contenedor Python
+ci:test:
+  stage: ci
+  image: python:3.6-slim
+  script:
+    - pip install -r requirements.txt
+    - pytest -q
+
+# Job de construcción de la imagen Docker
+# Usa Docker-in-Docker (dind) para poder ejecutar docker build dentro del runner
+ci:build-image:
+  stage: ci
+  image: docker:27
+  services:
+    - docker:27-dind
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+  script:
+    - docker build -t $IMAGE_NAME -f Dockerfile .
+
+# ─────────────────────────────────────────────
+# STAGE CD
+# ─────────────────────────────────────────────
+
+# Job de despliegue - solo se ejecuta en develop o master
+# En develop simula el entorno DEV, en master el entorno PRO
+cd:deploy:
+  stage: cd
+  image: docker:27
+  services:
+    - docker:27-dind
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+  # Condición: solo ejecutar en develop o master
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "master"'
+  script:
+    - docker compose -f docker-compose.yml up -d
+    - sleep 20
+    - docker compose -f docker-compose.yml exec -T app curl -f http://localhost:5000/ || true
+  # Limpieza garantizada aunque falle el job (equivalente a if: always() en GitHub Actions)
+  after_script:
+    - docker compose -f docker-compose.yml down --volumes
